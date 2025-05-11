@@ -1,3 +1,6 @@
+// Complete single-file React app with full Mage: The Awakening 2E character sheet
+// Includes: attributes, skills, specialties, arcana, merits, conditions, aspirations, beats, and more
+
 import React, { useState, useEffect } from 'react';
 
 function DotRow({ count = 5, value = 0, onChange }) {
@@ -316,9 +319,21 @@ function App() {
           </div>
 
           <div>
-            <label>Obsession</label>
-            <input className="w-full p-2 border rounded" value={character.obsession} onChange={e => updateCharacter('obsession', e.target.value)} />
-          </div>
+  <h3 className="font-semibold">Obsessions</h3>
+  {Array.from({ length: (character.gnosis >= 1 && character.gnosis <= 10) ? [1,1,2,2,2,3,3,3,4,4][character.gnosis - 1] : 1 }).map((_, i) => (
+    <input
+      key={i}
+      className="w-full p-2 border rounded mb-1"
+      placeholder={`Obsession ${i + 1}`}
+      value={character.obsessions?.[i] || ''}
+      onChange={e => {
+        const updated = [...(character.obsessions || [])];
+        updated[i] = e.target.value;
+        updateCharacter('obsessions', updated);
+      }}
+    />
+  ))}
+</div>
         </div>
       )}
     </div>
