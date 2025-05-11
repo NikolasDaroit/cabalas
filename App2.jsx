@@ -224,11 +224,11 @@ export default function App() {
   const loadCharacter = (key: string) => {
     const raw = localStorage.getItem(key);
     if (!raw) return;
-    if (!window.confirm('Load and overwrite current character?')) return;
     const char: Character = JSON.parse(raw);
     dispatch({ type: 'load', character: char });
     setSelectedKey(key);
   };
+
 
   // import JSON
   const handleImport = (e: ChangeEvent<HTMLInputElement>) => {
