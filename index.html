@@ -12,179 +12,269 @@
   </body>
 </html>
  -->
-
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Mage Character Sheet</title>
-
-  <!-- Tailwind via CDN -->
+  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-white">
   <div id="root"></div>
 
-  <!-- React + ReactDOM UMD builds -->
+  <!-- React & ReactDOM (UMD builds) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <!-- Babel Standalone for JSX/ESNext -->
+  <!-- Babel Standalone for on-the-fly JSX/ESNext -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Your app code, transpiled on-the-fly -->
+  <!-- Your entire app in plain JS+JSX -->
   <script type="text/babel">
     const { useReducer, useEffect, useCallback, useState } = React;
 
-    // Initial state shape
-    const initial = {
+    // --- Constants ---
+    const ALL_ATTRIBUTES = [
+      'Intelligence','Wits','Resolve','Strength','Dexterity','Stamina','Presence','Manipulation','Composure'
+    ];
+    const ALL_ARCANA = ['Death','Fate','Forces','Life','Matter','Mind','Prime','Space','Spirit','Time'];
+    const ALL_SKILLS = [
+      'Academics','Computer','Crafts','Investigation','Medicine','Occult','Politics','Science',
+      'Athletics','Brawl','Drive','Firearms','Larceny','Stealth','Survival','Weaponry',
+      'Animal Ken','Empathy','Expression','Intimidation','Persuasion','Socialize','Streetwise','Subterfuge'
+    ];
+    const ALL_MERITS = [
+      'Allies','Ambidextrous','Common Sense','Danger Sense','Eidetic Memory','Fast Reflexes',
+      'Resources','Status','Striking Looks','Mentor'
+    ];
+    const MERIT_DESCRIPTIONS = {
+      Allies: 'You have associates who can help in specific fields.',
+      Ambidextrous: 'Ignore off-hand penalties.',
+      'Common Sense': 'Ask the ST for guidance once per chapter.',
+      'Danger Sense': '+2 bonus to detect ambushes.',
+      'Eidetic Memory': 'Perfect recall of details.',
+      'Fast Reflexes': 'Add dots to Initiative.',
+      Resources: 'Represents disposable income or wealth.',
+      Status: 'Influence within an organization or group.',
+      'Striking Looks': 'Bonuses to social rolls based on appearance.',
+      Mentor: 'A guide or teacher who provides help.'
+    };
+    const MAX_MANA_BY_GNOSIS = [10,11,12,13,15,20,25,30,50,75];
+    const OBSESSIONS_ALLOWED = [1,1,2,2,2,3,3,3,4,4];
+
+    // --- Initial state ---
+    const initialState = {
       info: { Name:'', Path:'', Order:'', Legacy:'', Virtue:'', Vice:'' },
-      attributes: {}, arcana: {}, skills: {},
-      merits: [], conditions: [], aspirations:['','',''], obsessions:[],
-      healthBoxes: Array(10).fill(''), willpowerBoxes: Array(10).fill(''),
-      mana:0, gnosis:1, wisdom:0, beats:0, arcaneBeats:0, experience:0, arcaneExperience:0, size:5
+      attributes: {},
+      arcana: {},
+      skills: {},
+      merits: [],
+      conditions: [],
+      aspirations: ['','',''],
+      obsessions: [],
+      healthBoxes: Array(10).fill(''),
+      willpowerBoxes: Array(10).fill(''),
+      mana: 0,
+      gnosis: 1,
+      wisdom: 0,
+      beats: 0,
+      arcaneBeats: 0,
+      experience: 0,
+      arcaneExperience: 0,
+      size: 5
     };
 
-    // Reducer
+    // --- Reducer ---
     function reducer(state, action) {
       switch(action.type) {
-        case 'load': return { ...action.character };
+        case 'load':
+          return { ...action.character };
         case 'updateInfo':
-          return { ...state, info:{ ...state.info, [action.field]: action.value } };
+          return { ...state, info: { ...state.info, [action.field]: action.value }};
         case 'updateAttribute':
-          return { ...state, attributes:{ ...state.attributes, [action.attr]: action.value } };
+          return { ...state, attributes: { ...state.attributes, [action.attr]: action.value }};
         case 'updateArcana':
-          return { ...state, arcana:{ ...state.arcana, [action.arc]: action.value } };
+          return { ...state, arcana: { ...state.arcana, [action.arc]: action.value }};
         case 'updateSkill':
-          return { ...state, skills:{ ...state.skills, [action.skill]: action.entry } };
+          return { ...state, skills: { ...state.skills, [action.skill]: action.entry }};
         case 'addMerit':
-          if (state.merits.some(m=>m.name===action.merit)) return state;
-          return { ...state, merits:[ ...state.merits, { name:action.merit, dots:1 } ] };
+          if (state.merits.some(m => m.name===action.merit)) return state;
+          return { ...state, merits: [...state.merits, { name:action.merit, dots:1 }]};
         case 'updateMerit':
-          let m = [...state.merits]; m[action.index] = action.entry;
-          return { ...state, merits:m };
+          const m = [...state.merits];
+          m[action.index] = action.entry;
+          return { ...state, merits: m };
         case 'removeMerit':
           return { ...state, merits: state.merits.filter((_,i)=>i!==action.index) };
         case 'addCondition':
-          if(!action.condition.trim()) return state;
-          return { ...state, conditions:[ ...state.conditions, action.condition.trim() ] };
+          if (!action.condition.trim()) return state;
+          return { ...state, conditions:[...state.conditions, action.condition.trim()]};
         case 'removeCondition':
-          return { ...state, conditions: state.conditions.filter((_,i)=>i!==action.index) };
+          return { ...state, conditions: state.conditions.filter((_,i)=>i!==action.index)};
         case 'updateGnosis':
-          return { 
+          return {
             ...state,
             gnosis: action.value,
-            mana: Math.min(state.mana, [10,11,12,13,15,20,25,30,50,75][action.value-1])
+            mana: Math.min(state.mana, MAX_MANA_BY_GNOSIS[action.value-1])
           };
         case 'updateMana':
           return {
             ...state,
-            mana: Math.max(0, Math.min(action.value, [10,11,12,13,15,20,25,30,50,75][state.gnosis-1]))
+            mana: Math.max(0, Math.min(action.value, MAX_MANA_BY_GNOSIS[state.gnosis-1]))
           };
         case 'updateObsession':
-          let obs = [...state.obsessions]; obs[action.index] = action.value;
-          return { ...state, obsessions:obs };
+          const obs = [...state.obsessions];
+          obs[action.index] = action.value;
+          return { ...state, obsessions: obs };
         case 'updateHealthBoxes':
           return { ...state, healthBoxes: action.healthBoxes };
         case 'updateWillpowerBoxes':
           return { ...state, willpowerBoxes: action.willpowerBoxes };
         case 'increment':
-          return { ...state, [action.field]: state[action.field] + 1 };
+          return { ...state, [action.field]: state[action.field]+1 };
         case 'decrement':
-          return { ...state, [action.field]: Math.max(0, state[action.field] - 1) };
+          return { ...state, [action.field]: Math.max(0, state[action.field]-1) };
+        case 'updateSize':
+          return { ...state, size: action.value };
         default:
           return state;
       }
     }
 
-    // DotRow Component
+    // --- DotRow Component ---
     function DotRow({ count=5, value=0, onChange }) {
-      const handleKey=(i,e)=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); onChange(i+1);} };
+      const handleKey = (i, e) => {
+        if (e.key==='Enter'||e.key===' ') {
+          e.preventDefault();
+          onChange(i+1);
+        }
+      };
       return <div className="flex space-x-1">
         {Array.from({length:count}).map((_,i)=>(
           <button key={i}
-            role="slider" aria-valuemin={0} aria-valuemax={count} aria-valuenow={value}
+            role="slider"
+            aria-valuemin={0}
+            aria-valuemax={count}
+            aria-valuenow={value}
             title={`${i+1} dots`}
-            onClick={()=>onChange(i+1)} onKeyDown={e=>handleKey(i,e)} tabIndex={0}
-            className={`w-5 h-5 rounded-full border-2 ${i < value ? 'bg-black':'bg-white'} border-black focus:outline-none focus:ring-2`}
+            onClick={()=>onChange(i+1)}
+            onKeyDown={e=>handleKey(i,e)}
+            tabIndex={0}
+            className={`w-5 h-5 rounded-full border-2 ${i<value?'bg-black':'bg-white'} border-black focus:outline-none focus:ring-2`}
           />
         ))}
       </div>;
     }
 
-    // BoxRow Component
+    // --- BoxRow Component ---
     function BoxRow({ count=10, value=[], onChange }) {
-      const toggle=i=>{
-        const v = value[i]==='L' ? 'A' : value[i]==='A' ? '' : 'L';
-        let arr = [...value]; arr[i]=v; onChange(arr);
+      const toggle = i => {
+        const v = value[i]==='L'?'A':value[i]==='A'?'':'L';
+        const arr = [...value];
+        arr[i] = v;
+        onChange(arr);
       };
-      const handleKey=(i,e)=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); toggle(i);} };
+      const handleKey = (i,e) => {
+        if (e.key==='Enter'||e.key===' ') {
+          e.preventDefault();
+          toggle(i);
+        }
+      };
       return <div className="flex space-x-1">
         {Array.from({length:count}).map((_,i)=>(
           <button key={i}
             title="Box"
-            onClick={()=>toggle(i)} onKeyDown={e=>handleKey(i,e)} tabIndex={0}
+            onClick={()=>toggle(i)}
+            onKeyDown={e=>handleKey(i,e)}
+            tabIndex={0}
             className={`w-5 h-5 border text-xs font-bold rounded focus:outline-none focus:ring-2 ${
               value[i]==='L'?'bg-yellow-400':value[i]==='A'?'bg-red-600 text-white':'bg-white'
             } border-black`}
-          >{value[i]}</button>
+          >
+            {value[i]}
+          </button>
         ))}
       </div>;
     }
 
-    // Main App
+    // --- Main App ---
     function App() {
-      const [state, dispatch] = useReducer(reducer, initial);
+      const [state, dispatch] = useReducer(reducer, initialState);
       const [list, setList] = useState([]);
       const [sel, setSel] = useState('');
 
-      const REFRESH=useCallback(()=>{
-        setList(Object.keys(localStorage).filter(k=>k.startsWith('mageCharacter_')));
-      },[]);
-      useEffect(()=>{ REFRESH(); },[REFRESH]);
+      const refreshList = useCallback(() => {
+        setList(Object.keys(localStorage).filter(k => k.startsWith('mageCharacter_')));
+      }, []);
+      useEffect(() => { refreshList(); }, [refreshList]);
 
-      // Auto-save on change
-      useEffect(()=>{
+      // autosave
+      useEffect(() => {
         if (!state.info.Name) return;
-        const h=setTimeout(()=>{
+        const h = setTimeout(() => {
           localStorage.setItem(`mageCharacter_${state.info.Name}`, JSON.stringify(state));
           setSel(`mageCharacter_${state.info.Name}`);
-          REFRESH();
-        },300);
-        return()=>clearTimeout(h);
-      },[state,REFRESH]);
+          refreshList();
+        }, 300);
+        return () => clearTimeout(h);
+      }, [state, refreshList]);
 
-      // Load
-      const loadChar=key=>{
-        let raw=localStorage.getItem(key);
-        if(!raw) return;
-        dispatch({ type:'load', character: JSON.parse(raw) });
+      // load
+      const loadChar = key => {
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        const c = JSON.parse(raw);
+        dispatch({ type:'load', character: c });
         setSel(key);
       };
 
-      // Export
-      const exportJSON=()=>{
-        const b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-        const u=URL.createObjectURL(b);
-        let a=document.createElement('a');
-        a.href=u; a.download=`${state.info.Name||'character'}.json`; a.click();
+      // import
+      const handleImport = e => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+          const c = JSON.parse(r.result);
+          dispatch({ type:'load', character: c });
+          const k = `mageCharacter_${c.info.Name}`;
+          localStorage.setItem(k, JSON.stringify(c));
+          refreshList();
+          setSel(k);
+        };
+        r.readAsText(f);
+      };
+
+      // export
+      const exportJSON = () => {
+        const b = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+        const u = URL.createObjectURL(b);
+        const a = document.createElement('a');
+        a.href = u;
+        a.download = `${state.info.Name||'character'}.json`;
+        a.click();
         URL.revokeObjectURL(u);
       };
 
       return (
-        <div className="max-w-5xl mx-auto p-4 space-y-6">
-          {/* Dropdown */}
+        <div className="max-w-5xl mx-auto p-4 space-y-6 dark:bg-gray-800 dark:text-white">
+          {/* controls */}
           <div className="flex gap-2">
             <select value={sel} onChange={e=>loadChar(e.target.value)}
               className="p-1 border rounded bg-white dark:bg-gray-700">
               <option value="">Select Character</option>
-              {list.map(k=><option key={k} value={k}>{k.replace('mageCharacter_','')}</option>)}
+              {list.map(k=>(
+                <option key={k} value={k}>{k.replace('mageCharacter_','')}</option>
+              ))}
             </select>
-            <button onClick={()=>dispatch({type:'load', character:initial})}
+            <button onClick={()=>dispatch({type:'load',character:initialState})}
               className="bg-yellow-500 text-white px-2 py-1 rounded">New</button>
             <button onClick={exportJSON}
               className="bg-gray-700 text-white px-2 py-1 rounded">Export</button>
+            <label className="bg-green-500 text-white px-2 py-1 rounded cursor-pointer">
+              Import<input type="file" accept="application/json" onChange={handleImport} className="hidden"/>
+            </label>
           </div>
 
           {/* Info */}
@@ -198,54 +288,132 @@
 
           {/* Attributes */}
           <div className="grid grid-cols-3 gap-4">
-            {['Intelligence','Wits','Resolve','Strength','Dexterity','Stamina','Presence','Manipulation','Composure']
-              .map(attr=>(
-                <div key={attr}>
-                  <label>{attr}</label>
-                  <DotRow value={state.attributes[attr]||0}
-                    onChange={val=>dispatch({type:'updateAttribute',attr,value:val})}/>
-                </div>
-              ))}
+            {ALL_ATTRIBUTES.map(attr=>(
+              <div key={attr}>
+                <label>{attr}</label>
+                <DotRow value={state.attributes[attr]||0}
+                  onChange={val=>dispatch({type:'updateAttribute',attr,value:val})}/>
+              </div>
+            ))}
           </div>
 
           {/* Skills */}
           <h3 className="font-semibold">Skills</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {['Academics','Computer','Crafts','Investigation','Medicine','Occult','Politics','Science',
-              'Athletics','Brawl','Drive','Firearms','Larceny','Stealth','Survival','Weaponry',
-              'Animal Ken','Empathy','Expression','Intimidation','Persuasion','Socialize','Streetwise','Subterfuge']
-              .map(skill=>(
-                <div key={skill}>
-                  <label>{skill}</label>
-                  <DotRow value={state.skills[skill]?.dots||0}
-                    onChange={val=>dispatch({type:'updateSkill',skill,entry:{dots:val,specialty:state.skills[skill]?.specialty||''}})}/>
-                  <input placeholder="Specialty" value={state.skills[skill]?.specialty||''}
-                    onChange={e=>dispatch({type:'updateSkill',skill,entry:{dots:state.skills[skill]?.dots||0,specialty:e.target.value}})}
-                    className="w-full text-xs mt-1 p-1 border rounded bg-white dark:bg-gray-700"/>
-                </div>
-              ))}
+            {ALL_SKILLS.map(s=>(
+              <div key={s}>
+                <label>{s}</label>
+                <DotRow value={state.skills[s]?.dots||0}
+                  onChange={val=>dispatch({type:'updateSkill',skill:s,entry:{dots:val,specialty:state.skills[s]?.specialty||''}})}/>
+                <input placeholder="Specialty" value={state.skills[s]?.specialty||''}
+                  onChange={e=>dispatch({type:'updateSkill',skill:s,entry:{dots:state.skills[s]?.dots||0,specialty:e.target.value}})}
+                  className="w-full text-xs mt-1 p-1 border rounded bg-white dark:bg-gray-700"/>
+              </div>
+            ))}
           </div>
 
           {/* Arcana */}
           <h3 className="font-semibold">Arcana</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {['Death','Fate','Forces','Life','Matter','Mind','Prime','Space','Spirit','Time']
-              .map(ar=>(
-                <div key={ar}>
-                  <label>{ar}</label>
-                  <DotRow value={state.arcana[ar]||0}
-                    onChange={val=>dispatch({type:'updateArcana',arc:ar,value:val})}/>
-                </div>
-              ))}
+            {ALL_ARCANA.map(ar=>(
+              <div key={ar}>
+                <label>{ar}</label>
+                <DotRow value={state.arcana[ar]||0}
+                  onChange={val=>dispatch({type:'updateArcana',arc:ar, value:val})}/>
+              </div>
+            ))}
           </div>
 
-          {/* (you can continue the rest of Sections similarly…) */}
+          {/* Merits */}
+          <h3 className="font-semibold">Merits</h3>
+          <select onChange={e=>dispatch({type:'addMerit',merit:e.target.value})}
+            className="w-full p-2 border rounded mb-2 bg-white dark:bg-gray-700">
+            <option value="">Add Merit</option>
+            {ALL_MERITS.map(m=>(
+              <option key={m} value={m} title={MERIT_DESCRIPTIONS[m]}>{m}</option>
+            ))}
+          </select>
+          {state.merits.map((m,i)=>(
+            <div key={i} className="flex items-center gap-2">
+              <input value={m.name} title={MERIT_DESCRIPTIONS[m.name]}
+                onChange={e=>dispatch({type:'updateMerit',index:i,entry:{...m,name:e.target.value}})}
+                className="flex-1 p-2 border rounded bg-white dark:bg-gray-700"/>
+              <DotRow value={m.dots}
+                onChange={val=>dispatch({type:'updateMerit',index:i,entry:{...m,dots:val}})}/>
+              <button onClick={()=>dispatch({type:'removeMerit',index:i})} className="text-red-500">×</button>
+            </div>
+          ))}
 
+          {/* Conditions */}
+          <h3 className="font-semibold">Conditions</h3>
+          <input placeholder="Add condition"
+            onKeyDown={e=>{if(e.key==='Enter'){dispatch({type:'addCondition',condition:e.target.value});e.target.value='';}}}
+            className="p-2 border rounded w-full bg-white dark:bg-gray-700"/>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {state.conditions.map((c,i)=>(
+              <span key={i} className="bg-blue-200 dark:bg-blue-700 px-2 py-1 rounded-full">
+                {c}
+                <button onClick={()=>dispatch({type:'removeCondition',index:i})} className="ml-2 text-red-500">×</button>
+              </span>
+            ))}
+          </div>
+
+          {/* Gnosis & Mana */}
+          <h3 className="font-semibold">Gnosis & Mana</h3>
+          <DotRow count={10} value={state.gnosis} onChange={val=>dispatch({type:'updateGnosis',value:val})}/>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label>Mana</label>
+              <input type="number" value={state.mana}
+                onChange={e=>dispatch({type:'updateMana',value:parseInt(e.target.value)||0})}
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700"/>
+            </div>
+            <div>
+              <label>Max Mana</label>
+              <input readOnly value={MAX_MANA_BY_GNOSIS[state.gnosis-1]||0}
+                className="w-full p-2 border rounded bg-gray-100 dark:bg-gray-600"/>
+            </div>
+            <div>
+              <label>Obsessions</label>
+              <input readOnly value={OBSESSIONS_ALLOWED[state.gnosis-1]||1}
+                className="w-full p-2 border rounded bg-gray-100 dark:bg-gray-600"/>
+            </div>
+          </div>
+
+          {/* Obsessions */}
+          <h3 className="font-semibold">Obsessions</h3>
+          {Array.from({length:OBSESSIONS_ALLOWED[state.gnosis-1]||1}).map((_,i)=>(
+            <input key={i} placeholder={`Obsession ${i+1}`} value={state.obsessions[i]||''}
+              onChange={e=>dispatch({type:'updateObsession',index:i,value:e.target.value})}
+              className="w-full p-2 border rounded mb-1 bg-white dark:bg-gray-700"/>
+          ))}
+
+          {/* Health & Willpower */}
+          <h3 className="font-semibold">Health & Willpower</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <BoxRow value={state.healthBoxes}
+              onChange={v=>dispatch({type:'updateHealthBoxes',healthBoxes:v})}/>
+            <BoxRow value={state.willpowerBoxes}
+              onChange={v=>dispatch({type:'updateWillpowerBoxes',willpowerBoxes:v})}/>
+          </div>
+
+          {/* Beats & XP */}
+          <h3 className="font-semibold">Beats & XP</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {['beats','arcaneBeats','experience','arcaneExperience'].map(f=>(
+              <div key={f} className="space-x-2">
+                <label className="capitalize">{f}</label>
+                <button onClick={()=>dispatch({type:'decrement',field:f})} className="px-2">−</button>
+                <span>{state[f]}</span>
+                <button onClick={()=>dispatch({type:'increment',field:f})} className="px-2">＋</button>
+              </div>
+            ))}
+          </div>
         </div>
       );
     }
 
-    // Mount
+    // Mount it
     ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
