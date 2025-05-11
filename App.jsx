@@ -106,6 +106,30 @@ function App() {
 
   const updateCharacter = (key, value) => setCharacter(prev => ({ ...prev, [key]: value }));
 
+  const meritDescriptions = {
+  "Advanced Library": "Your library contains deep supernatural knowledge. Grants the Informed Condition once per topic per story.",
+  "Allies": "You have associates who can help in specific fields.",
+  "Ambidextrous": "Ignore penalties for using your off-hand.",
+  "Eidetic Memory": "Recall facts without needing to roll.",
+  "Common Sense": "Once per chapter, ask the ST about risks or choices.",
+  "Danger Sense": "+2 bonus to detect ambushes.",
+  "Fast Reflexes": "Add dots to Initiative.",
+  "Iron Stamina": "Ignore wound or fatigue penalties up to dots.",
+  "Resources": "You have disposable income to spend on gear and lifestyle.",
+  "Mentor": "An NPC mentor who guides and assists you.",
+  "Status": "You hold influence in a specific group.",
+  "Striking Looks": "Gain bonuses on social rolls based on appearance.",
+  "Barfly": "You can always get into exclusive venues and gatherings.",
+  "Language": "You can read, write, and speak a chosen language fluently.",
+  "Trained Observer": "Gain 9-Again or 8-Again on perception checks.",
+  "Indomitable": "+2 to resist supernatural mental influence.",
+  "Iron Will": "Use Resolve in place of Willpower to resist influence.",
+  "Quick Draw": "Draw a weapon as a reflexive action.",
+  "Takes One to Know One": "+2 dice and 9-Again when investigating events resonating with your Vice.",
+  "Vice-Ridden": "You have a second Vice.",
+  "Virtuous": "You have a second Virtue."
+};
+
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-4">
       <div className="flex gap-2">
@@ -194,13 +218,30 @@ function App() {
 
           <div>
             <h3 className="font-semibold">Merits</h3>
+            <select
+  className="w-full p-2 border rounded mb-2"
+  onChange={(e) => {
+    const val = e.target.value;
+    if (val && !character.merits.some(m => m.name === val)) {
+      updateCharacter('merits', [...character.merits, { name: val, dots: 1 }]);
+    }
+    e.target.value = '';
+  }}
+>
+  <option value="">Add a merit</option>
+  {Object.entries(meritDescriptions)
+    .filter(([name]) => !character.merits.some(m => m.name === name))
+    .map(([name, description]) => (
+      <option key={name} value={name} title={description}>{name}</option>
+    ))}
+</select>
             {character.merits.map((m, i) => (
               <div key={i} className="flex items-center gap-2">
                 <input
                   type="text"
                   className="flex-1 p-2 border rounded"
                   placeholder="Merit"
-                  value={m.name}
+                  value={m.name} title={meritDescriptions[m.name] || ''}
                   onChange={e => {
                     const merits = [...character.merits];
                     merits[i].name = e.target.value;
