@@ -1,0 +1,23 @@
+{
+  "name": "mage-character-sheet",
+  "version": "1.0.0",
+  "description": "Mage: The Awakening 2nd Edition Character Sheet Web App",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "test": "jest"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "jest": "^29.7.0",
+    "@testing-library/react": "^14.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.31",
+    "autoprefixer": "^10.4.16"
+  }
+}
