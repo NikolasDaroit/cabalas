@@ -1,11 +1,12 @@
-// src/components/LookupModal.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function LookupModal({
-  items = [],    // array of { name, rating?, prerequisites?, description, persistent?, type? }
-  open,          // boolean
-  onClose,       // () => void
-  onSelect       // item => void
+  items = [],
+  open = true,
+  onClose,
+  onSelect,
+  header, // New: custom header (e.g., filter buttons, search)
+  renderItem, // New: custom render function for each item
 }) {
   const [filterText, setFilterText] = useState('');
   const [filteredItems, setFilteredItems] = useState(items);
@@ -21,6 +22,11 @@ export default function LookupModal({
     );
   }, [filterText, items]);
 
+  // Reset filter text when modal opens/closes
+  useEffect(() => {
+    if (!open) setFilterText('');
+  }, [open]);
+
   if (!open) return null;
 
   return (
@@ -32,59 +38,70 @@ export default function LookupModal({
         className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-5xl p-4"
         onClick={e => e.stopPropagation()}
       >
-        {/* filter input */}
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Search…"
-            value={filterText}
-            onChange={e => setFilterText(e.target.value)}
-            className="w-full p-2 border rounded bg-gray-100 dark:bg-gray-700 focus:outline-none"
-          />
-        </div>
+        {/* Custom header (e.g., arcana filter, search) */}
+        {header}
 
-        {/* grid of cards */}
+        {/* Fallback search input if no header is provided */}
+        {!header && (
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Search…"
+              value={filterText}
+              onChange={e => setFilterText(e.target.value)}
+              className="w-full p-2 border rounded bg-gray-100 dark:bg-gray-700 focus:outline-none"
+            />
+          </div>
+        )}
+
+        {/* Grid of cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto max-h-[70vh]">
-          {filteredItems.map(item => (
+          {filteredItems.map((item, index) => (
             <div
-              key={item.name}
-              className="border rounded-lg p-4 bg-white dark:bg-gray-700 flex flex-col justify-between"
+              key={item.name + index}
+              onClick={() => { onSelect(item); onClose(); }}
+              className="cursor-pointer"
             >
-              <div>
-                <h4 className="text-lg font-semibold">{item.name}</h4>
-                {item.rating && (
-                  <p className="text-sm">
-                    <strong>Rating:</strong> {item.rating}
-                  </p>
-                )}
-                {item.prerequisites && (
-                  <p className="text-sm">
-                    <strong>Prerequisites:</strong> {item.prerequisites}
-                  </p>
-                )}
-                {item.persistent !== undefined && (
-                  <p className="text-sm">
-                    <strong>Persistent:</strong> {item.persistent ? 'Yes' : 'No'}
-                  </p>
-                )}
-                {item.type && (
-                  <p className="text-sm">
-                    <strong>Type:</strong> {item.type}
-                  </p>
-                )}
-                {item.description && (
-                  <p className="mt-2 text-sm">{item.description}</p>
-                )}
-              </div>
-              <button
-                onClick={() => {
-                  onSelect(item);
-                  onClose();
-                }}
-                className="mt-4 self-start bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 focus:outline-none"
-              >
-                Add
-              </button>
+              {renderItem ? renderItem(item) : (
+                <div className="border rounded-lg p-4 bg-white dark:bg-gray-700 flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-lg font-semibold">{item.name}</h4>
+                    {item.rating && (
+                      <p className="text-sm">
+                        <strong>Rating:</strong> {item.rating}
+                      </p>
+                    )}
+                    {item.prerequisites && (
+                      <p className="text-sm">
+                        <strong>Prerequisites:</strong> {item.prerequisites}
+                      </p>
+                    )}
+                    {item.persistent !== undefined && (
+                      <p className="text-sm">
+                        <strong>Persistent:</strong> {item.persistent ? 'Yes' : 'No'}
+                      </p>
+                    )}
+                    {item.type && (
+                      <p className="text-sm">
+                        <strong>Type:</strong> {item.type}
+                      </p>
+                    )}
+                    {item.description && (
+                      <p className="mt-2 text-sm">{item.description}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      onSelect(item);
+                      onClose();
+                    }}
+                    className="mt-4 self-start bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 focus:outline-none"
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
             </div>
           ))}
           {filteredItems.length === 0 && (

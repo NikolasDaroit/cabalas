@@ -113,6 +113,12 @@ export function reducer(state, action) {
     case "updateSize":
       return { ...state, size: action.value };
 
+    case 'SET_MAGIC_PRAXES':
+      return { ...state, magic: { ...state.magic, praxes: action.payload } };
+    
+    case 'SET_MAGIC_ROTES':
+      return { ...state, magic: { ...state.magic, rotes: action.payload } };
+    
     default:
       return state;
   }
