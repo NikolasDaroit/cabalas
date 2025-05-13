@@ -145,7 +145,7 @@ export default function SlidingModal({ praxes, rotes, onChangePraxes, onChangeRo
         className="fixed bottom-6 right-6 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition text-2xl z-20"
         aria-label="Abrir menu de magia"
       >
-        🧙‍♂️ Grimório
+        📖
       </button>
 
       {/* Sliding Modal Overlay */}

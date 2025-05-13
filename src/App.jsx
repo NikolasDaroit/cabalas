@@ -13,11 +13,15 @@ import {
 import Header from './components/Header';
 import CharacterForm from './components/CharacterForm';
 import './styles/tailwind.css';
+// Adicione isso no topo (depois dos imports)
+const generateDefaultName = () => `Mage ${Math.floor(Math.random() * 1000)}`;
 
+// Dentro do componente App:
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [characterList, setCharacterList] = useState([]);
   const [selectedKey, setSelectedKey] = useState('');
+  const [hasCharacter, setHasCharacter] = useState(false); // � controle de exibição
 
   const refreshCharacterList = useCallback(() => {
     setCharacterList(listCharacters());
@@ -27,9 +31,9 @@ export default function App() {
     refreshCharacterList();
   }, [refreshCharacterList]);
 
-  // Auto‐save on changes (debounced)
   useEffect(() => {
-    if (!state.info.Name) return;
+    if (!hasCharacter || !state.info.Name) return;
+
     const timeout = setTimeout(() => {
       try {
         const key = saveToStorage(state);
@@ -40,37 +44,45 @@ export default function App() {
       }
     }, 300);
     return () => clearTimeout(timeout);
-  }, [state, refreshCharacterList]);
+  }, [state, hasCharacter, refreshCharacterList]);
 
   const handleLoad = (key) => {
     const character = loadFromStorage(key);
     if (character) {
       dispatch({ type: 'load', character });
       setSelectedKey(key);
+      setHasCharacter(true); // � agora há personagem
     }
   };
 
   const handleNew = () => {
-    dispatch({ type: 'load', character: initialState });
+    const newCharacter = {
+      ...initialState,
+      info: {
+        ...initialState.info,
+        Name: generateDefaultName()
+      }
+    };
+    dispatch({ type: 'load', character: newCharacter });
     setSelectedKey('');
+    setHasCharacter(true); // � agora há personagem
   };
 
-  const handleExport = () => {
-    exportToFile(state);
-  };
+  const handleExport = () => exportToFile(state);
 
   const handleImport = async (file) => {
     try {
       const { key, character } = await importCharacter(file);
       dispatch({ type: 'load', character });
       setSelectedKey(key);
+      setHasCharacter(true); // � agora há personagem
       refreshCharacterList();
     } catch (err) {
       console.error(err);
       alert('Failed to import character.');
     }
   };
-
+  window.state = state; // Para depuração
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-6 dark:bg-gray-800 dark:text-white">
       <Header
@@ -83,7 +95,10 @@ export default function App() {
         importCharacter={handleImport}
         character={state}
       />
-      <CharacterForm state={state} dispatch={dispatch} />
+
+      {hasCharacter && (
+        <CharacterForm state={state} dispatch={dispatch} />
+      )}
     </div>
   );
 }

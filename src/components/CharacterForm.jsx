@@ -1,6 +1,6 @@
 // src/components/CharacterForm.jsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import InfoSection from './InfoSection';
 import AttributesSection from './AttributeSection';
 import SkillsSection from './SkillsSection';
@@ -13,11 +13,13 @@ import ObsessionsSection from './ObsessionsSection';
 import HealthWillSection from './HealthWillSection';
 import BeatsSection from './BeatsSection';
 import Grimoire from './Grimoire';
+import SpellHelper from './SpellHelper/SpellHelper';
 
 export default function CharacterForm({ state, dispatch }) {
   // Read current praxes and rotes from state (initialize if undefined)
   const praxes = state.magic?.praxes || [];
   const rotes = state.magic?.rotes || [];
+  const [showHelper, setShowHelper] = useState(false);
 
   // Dispatch helpers
   const handlePraxesChange = (newPraxes) =>
@@ -49,6 +51,22 @@ export default function CharacterForm({ state, dispatch }) {
           onChangeRotes={handleRotesChange}
         />
       </div>
+      {/* Floating Spell Helper Button */}
+      <button
+        onClick={() => setShowHelper(true)}
+        className="fixed bottom-6 right-24 p-3 bg-purple-700 text-white rounded-full shadow-lg hover:bg-purple-800 transition text-2xl z-30"
+        aria-label="Abrir Spell Helper"
+        style={{ minWidth: 56, minHeight: 56 }}
+      >
+        🪄
+      </button>
+
+      {showHelper && (
+        <SpellHelper
+          casterData={state}
+          onClose={() => setShowHelper(false)}
+        />
+      )}
     </div>
   );
 }

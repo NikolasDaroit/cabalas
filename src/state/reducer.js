@@ -13,11 +13,15 @@ export function reducer(state, action) {
         info: { ...state.info, [action.field]: action.value },
       };
 
-    case "updateAttribute":
-      return {
-        ...state,
-        attributes: { ...state.attributes, [action.attr]: action.value },
-      };
+    case 'updateAttribute':
+    return {
+      ...state,
+      attributes: {
+        ...state.attributes,
+        [action.attribute.toLowerCase()]: action.value
+      }
+    };
+
 
     case "updateArcana":
       return {

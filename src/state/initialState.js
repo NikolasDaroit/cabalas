@@ -7,7 +7,17 @@ export const initialState = {
     Virtue: '',
     Vice: ''
   },
-  attributes: {},
+  attributes: {
+    strength: 1,
+    dexterity: 1,
+    stamina: 1,
+    presence: 1,
+    manipulation: 1,
+    composure: 1,
+    intelligence: 1,
+    wits: 1,
+    resolve: 1
+  },
   arcana: {},
   skills: {},
   merits: [],

@@ -13,9 +13,9 @@ export default function AttributesSection({ state, dispatch }) {
           <div key={attr}>
             <label className="block text-sm font-medium">{attr}</label>
             <DotRow
-              value={state.attributes[attr] || 0}
+              value={state.attributes[attr.toLowerCase()] || 1}
               onChange={val =>
-                dispatch({ type: 'updateAttribute', attr, value: val })
+                dispatch({ type: 'updateAttribute', attribute: attr, value: val })
               }
             />
           </div>
